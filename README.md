@@ -10,6 +10,7 @@ The benchmark files are located in the `14_ieee` folder:
 - E = 20 : number of lines
 ---
 ## Onnx model description
+NN with bound clip and residual calculation.
 ### Input: `pd/qd`
 dim: (2L) = 22
 - `pd`: Real power demand. (L)
@@ -30,7 +31,7 @@ dim: (2G + 4N + 6E) = 186
 - `q_balance`: Reactive power balance residual. (N)
 
 ### Compute graph
-![compute graphs of the NN with bound clip and residual calculation](14_ieee/compute_graph.png)
+![](14_ieee/compute_graph.png)
 ---
 ## Vnnlib description
 ### Input:
@@ -41,7 +42,9 @@ Check power balance violation:
 for each bus `i`
 - `|p_balance[i]| <= max(10^(-3), 10^(-2)*pd_i)`
 - `|q_balance[i]| <= max(10^(-3), 10^(-2)*qd_i)`
-where `pd_i` and `qd_i` refers to the active and reactive load at each bus respectively.
+
+where `pd_i` and `qd_i` refer to the active and reactive load at each bus respectively.
+
 ---
 ## Inference
 The code to run inference is presented in the `main.py` file.
