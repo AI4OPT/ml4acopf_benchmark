@@ -9,7 +9,7 @@ N = 14
 L = 11
 
 # Load the ONNX model into memory
-model_path = "14_ieee/boundclip_14bus_with_residuals.onnx"
+model_path = "14_ieee/ldf14bus.onnx"
 model = onnx.load(model_path)
 sess_options = ort.SessionOptions()
 sess_options.intra_op_num_threads = 1
