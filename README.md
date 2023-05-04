@@ -1,6 +1,6 @@
 # Benchmark
 The benchmark files are located in the `14_ieee` folder:
-- onnx file: `boundclip_14bus_with_residuals.onnx`
+- onnx file: `ldf14bus.onnx`
 - vnnlib file: `14_bus_prop1.vnnlib`
 ---
 ## Parameters
