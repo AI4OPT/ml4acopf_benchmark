@@ -28,6 +28,9 @@ dim: (2G + 4N + 6E) = 186
 - `thrm_2`: Thermal limit to residual. (E)
 - `p_balance`: Real power balance residual. (N)
 - `q_balance`: Reactive power balance residual. (N)
+
+### Compute graph
+![compute graphs of the NN with bound clip and residual calculation](14_ieee/compute_graph.png)
 ---
 ## Vnnlib description
 ### Input:
@@ -38,7 +41,7 @@ Check power balance violation:
 for each bus `i`
 - `|p_balance[i]| <= max(10^(-3), 10^(-2)*pd_i)`
 - `|q_balance[i]| <= max(10^(-3), 10^(-2)*qd_i)`
-
+where `pd_i` and `qd_i` refers to the active and reactive load at each bus respectively.
 ---
 ## Inference
 The code to run inference is presented in the `main.py` file.
