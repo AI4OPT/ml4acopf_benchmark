@@ -8,27 +8,26 @@ The benchmark files are located in the `14_ieee` folder:
 - G =  5 : number of generators
 - L = 11 : number of loads
 - E = 20 : number of lines
-- B = 32 : batch size
 ---
 ## Onnx model description
 ### Input: `pd/qd`
-dim: (B, 2L) = (32, 22)
-- `pd`: Real power demand. (B, L)
-- `qd`: Reactive power demand. (B, L)
+dim: (2L) = 22
+- `pd`: Real power demand. (L)
+- `qd`: Reactive power demand. (L)
 ### Output: `pg/qg/vm/va/pf/pt/qf/qt/thrm_1/thrm_2/p_balance/q_balance`
-dim: (B, 2G + 4N + 6E) = (32, 186)
-- `pg`: Real power generation. (B, G)
-- `qg`: Reactive power generation. (B, G)
-- `vm`: Voltage magnitude. (B, N)
-- `va`: Voltage angle. (B, N)
-- `pf`: Real power flow from. (B, E)
-- `pt`: Real power flow to. (B, E)
-- `qf`: Reactive power flow from. (B, E)
-- `qt`: Reactive power flow to. (B, E)
-- `thrm_1`: Thermal limit from violation. (B, E)
-- `thrm_2`: Thermal limit to violation. (B, E)
-- `p_balance`: Real power balance violation. (B, N)
-- `q_balance`: Reactive power balance violation. (B, N)
+dim: (2G + 4N + 6E) = 186
+- `pg`: Real power generation. (G)
+- `qg`: Reactive power generation. (G)
+- `vm`: Voltage magnitude. (N)
+- `va`: Voltage angle. (N)
+- `pf`: Real power flow from. (E)
+- `pt`: Real power flow to. (E)
+- `qf`: Reactive power flow from. (E)
+- `qt`: Reactive power flow to. (E)
+- `thrm_1`: Thermal limit from violation. (E)
+- `thrm_2`: Thermal limit to violation. (E)
+- `p_balance`: Real power balance violation. (N)
+- `q_balance`: Reactive power balance violation. (N)
 ---
 ## Vnnlib description
 ### Input:
