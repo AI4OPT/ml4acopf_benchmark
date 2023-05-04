@@ -31,7 +31,7 @@ vnnlib_output = vnnlib[0][1]
 
 # create input data
 input_val = [vnnlib_input[i][0] for i in range(2*L)]
-input_data = np.outer(np.array([[input_val]], dtype=np.float32),np.ones(input_shape[0], dtype=np.float32)).T
+input_data = np.array([input_val], dtype=np.float32)
 
 # get the model output
 output = sess.run([output_name], {input_name: input_data})
