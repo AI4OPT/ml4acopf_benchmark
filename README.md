@@ -24,10 +24,10 @@ dim: (2G + 4N + 6E) = 186
 - `pt`: Real power flow to. (E)
 - `qf`: Reactive power flow from. (E)
 - `qt`: Reactive power flow to. (E)
-- `thrm_1`: Thermal limit from violation. (E)
-- `thrm_2`: Thermal limit to violation. (E)
-- `p_balance`: Real power balance violation. (N)
-- `q_balance`: Reactive power balance violation. (N)
+- `thrm_1`: Thermal limit from residual. (E)
+- `thrm_2`: Thermal limit to residual. (E)
+- `p_balance`: Real power balance residual. (N)
+- `q_balance`: Reactive power balance residual. (N)
 ---
 ## Vnnlib description
 ### Input:
