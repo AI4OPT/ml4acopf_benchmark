@@ -5,10 +5,11 @@ To set up the environment, follow these steps:
 1. Create the environment using the command: `conda env create -f env.yaml`
 2. Activate the environment using the command: `conda activate onnx-vnnlib-env`
 
-To produce vnnlib files, run: `python generate_properties.py --seed=42`
-
-The benchmark files are located in the `onnx` and `vnnlib` folders:
 ---
+The benchmark files are located in the `onnx` and `vnnlib` folders:
+
+To reproduce vnnlib files, run: `python generate_properties.py --seed=42`
+
 ## Vnnlib description
 ### Input:
 +- 5% perturbation of the reference active and reactive load + random noise between -1% and 1%
