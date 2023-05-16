@@ -22,8 +22,6 @@ def main(network_name, seed):
 
     model_path = os.path.join("onnx", f"{network_name}_ml4acopf.onnx")
 
-    model = onnx.load(model_path)
-
     # Load the ONNX model into memory
     sess = ort.InferenceSession(model_path)
 
@@ -32,9 +30,7 @@ def main(network_name, seed):
     output_info = sess.get_outputs()
 
     # Assume the first input and output nodes are the ones you want to use
-    input_name = input_info[0].name
     input_shape = input_info[0].shape
-    output_name = output_info[0].name
     output_shape = output_info[0].shape
 
     # Sort the keys of the load data dictionary
