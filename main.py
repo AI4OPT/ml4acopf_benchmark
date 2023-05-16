@@ -9,7 +9,7 @@ N = 14
 L = 11
 
 # Load the ONNX model into memory
-model_path = "onnx/ldf14bus.onnx"
+model_path = "onnx/14_ieee_ml4acopf.onnx"
 model = onnx.load(model_path)
 sess_options = ort.SessionOptions()
 sess_options.intra_op_num_threads = 1
@@ -24,7 +24,7 @@ output_name = output_info[0].name
 output_shape = output_info[0].shape
 
 # Load the vnnlib file into memory
-vnnlib_path = "vnnlib/14_bus_prop1.vnnlib"
+vnnlib_path = "vnnlib/14_ieee_prop1.vnnlib"
 vnnlib = read_vnnlib_simple(vnnlib_path, input_shape[1], output_shape[1])
 vnnlib_input = vnnlib[0][0]
 vnnlib_output = vnnlib[0][1]
