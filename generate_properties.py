@@ -3,7 +3,6 @@ import numpy as np
 import random
 import onnx
 import onnxruntime  as ort
-from typing import Tuple, List, Any
 import json
 import os
 
@@ -21,7 +20,7 @@ def main(network_name, seed):
     N = len(network['data']['bus'])
     L = len(network['data']['load'])
 
-    model_path = os.path.join("onnx", f"ldf{N}bus.onnx")
+    model_path = os.path.join("onnx", f"{network_name}_ml4acopf.onnx")
 
     model = onnx.load(model_path)
 
@@ -60,7 +59,7 @@ def main(network_name, seed):
         pd_bus[bus_index] = pd[i]
         qd_bus[bus_index] = qd[i]
 
-    with open(f"vnnlib/{N}_bus_prop1.vnnlib", 'w') as f:
+    with open(f"vnnlib/{network_name}_prop1.vnnlib", 'w') as f:
         # check power balance constraints violation
         f.write("; Check power balance violation:\n")
         # declare constants
@@ -108,5 +107,16 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # call main function with the network name argument
-    for network_name in ["14_ieee", "300_ieee"]:
+    network_names = ["14_ieee", "300_ieee"]
+    for network_name in network_names:
+        # generate vnnlib files
         main(network_name, args.seed)
+
+    # generate instances.csv file
+    timeout = 300
+    csvFile = open("instances.csv", "w")
+    for network in os.listdir('onnx'):
+        for prop in os.listdir('vnnlib'):
+            if "_".join(network.split("_")[:2]) == "_".join(prop.split("_")[:2]):
+                print(f"onnx/{network},vnnlib/{prop},{timeout}", file=csvFile)
+    csvFile.close()
