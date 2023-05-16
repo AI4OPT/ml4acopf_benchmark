@@ -28,8 +28,8 @@ The code to run inference is presented in the `main.py` file.
 
 ## Example
 Take 14-bus system as an example:
-- onnx file: `ldf14bus.onnx`
-- vnnlib file: `14_bus_prop1.vnnlib`
+- onnx file: `14_ieee_ml4acopf.onnx`
+- vnnlib file: `14_ieee_prop1.vnnlib`
 
 ### Parameters
 - N = 14 : number of buses
