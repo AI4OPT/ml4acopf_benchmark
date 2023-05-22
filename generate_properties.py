@@ -71,6 +71,9 @@ def main(network_name, seed):
         for i in range(L):
             lb = pd[i] * 0.95
             ub = pd[i] * 1.05
+            if pd[i] < 0:
+                lb = pd[i] * 1.05
+                ub = pd[i] * 0.95
             perturbed_lb = lb * (1 + perturbation[i])  # add the perturbation to the original lb
             perturbed_ub = ub * (1 + perturbation[i])   # add the perturbation to the original ub
             f.write(f"(assert (<= X_{i} {round(perturbed_ub, 9)}))\n")
@@ -79,6 +82,10 @@ def main(network_name, seed):
         for i in range(L):
             lb = qd[i] * 0.95
             ub = qd[i] * 1.05
+            # update lb and ub for negative values
+            if qd[i] < 0:
+                lb = qd[i] * 1.05
+                ub = qd[i] * 0.95
             perturbed_lb = lb * (1 + perturbation[i])  # add the perturbation to the original lb
             perturbed_ub = ub * (1 + perturbation[i])  # add the perturbation to the original ub
             f.write(f"(assert (<= X_{i+L} {round(perturbed_ub, 9)}))\n")
