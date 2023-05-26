@@ -54,6 +54,13 @@ def main(network_name, seed):
         bus_index = bus_id_to_index[bus_id]
         pd_bus[bus_index] = pd[i]
         qd_bus[bus_index] = qd[i]
+    # # Very robust :)
+    # min_perc = 0.9999
+    # max_perc = 1.0001
+    # random_perc = 0.00001
+    min_perc = 0.999
+    max_perc = 1.001
+    random_perc = 0.0001
 
     with open(f"vnnlib/{network_name}_prop1.vnnlib", 'w') as f:
         # check power balance constraints violation
@@ -67,25 +74,25 @@ def main(network_name, seed):
         f.write("\n")
         f.write("; Input constraints:\n")
         # input perturbation
-        perturbation = [random.uniform(-0.01, 0.01) for i in range(L)]  # generate a list of random numbers between -0.01 and 0.01
+        perturbation = [random.uniform(-random_perc, random_perc) for i in range(L)]  # generate a list of random numbers between -0.01 and 0.01
         for i in range(L):
-            lb = pd[i] * 0.95
-            ub = pd[i] * 1.05
+            lb = pd[i] * min_perc
+            ub = pd[i] * max_perc
             if pd[i] < 0:
-                lb = pd[i] * 1.05
-                ub = pd[i] * 0.95
+                lb = pd[i] * max_perc
+                ub = pd[i] * min_perc
             perturbed_lb = lb * (1 + perturbation[i])  # add the perturbation to the original lb
             perturbed_ub = ub * (1 + perturbation[i])   # add the perturbation to the original ub
             f.write(f"(assert (<= X_{i} {round(perturbed_ub, 9)}))\n")
             f.write(f"(assert (>= X_{i} {round(perturbed_lb, 9)}))\n")
             f.write("\n")
         for i in range(L):
-            lb = qd[i] * 0.95
-            ub = qd[i] * 1.05
+            lb = qd[i] * min_perc
+            ub = qd[i] * max_perc
             # update lb and ub for negative values
             if qd[i] < 0:
-                lb = qd[i] * 1.05
-                ub = qd[i] * 0.95
+                lb = qd[i] * max_perc
+                ub = qd[i] * min_perc
             perturbed_lb = lb * (1 + perturbation[i])  # add the perturbation to the original lb
             perturbed_ub = ub * (1 + perturbation[i])  # add the perturbation to the original ub
             f.write(f"(assert (<= X_{i+L} {round(perturbed_ub, 9)}))\n")

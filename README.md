@@ -12,7 +12,7 @@ To reproduce vnnlib files, run: `python generate_properties.py --seed=42`
 
 ## Vnnlib description
 ### Input:
-+- 5% perturbation of the reference active and reactive load + random noise between -1% and 1%
++- a% perturbation of the reference active and reactive load + random noise between -b% and b%, where a and b are self-defined values.
 ### Output:
 Check power balance violation:
 
