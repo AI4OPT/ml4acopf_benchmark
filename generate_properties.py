@@ -54,13 +54,21 @@ def main(network_name, seed):
         bus_index = bus_id_to_index[bus_id]
         pd_bus[bus_index] = pd[i]
         qd_bus[bus_index] = qd[i]
-    # # Very robust :)
+    # Case 1: both attackers can find adversarial examples
     # min_perc = 0.9999
     # max_perc = 1.0001
     # random_perc = 0.00001
+    # Case 2: uniform sampling cannot find adversarial examples, while PGD can
+    # min_perc = 0.9994
+    # max_perc = 2 - min_perc
+    # decimal_part = str(min_perc).split('.')[1]
+    # num_decimal_places = len(decimal_part.rstrip('0'))
+    # random_perc = 10**(-num_decimal_places)
+    # Case 3: none of the attacker can find adversarial examples
     min_perc = 0.999
     max_perc = 1.001
     random_perc = 0.0001
+
 
     with open(f"vnnlib/{network_name}_prop1.vnnlib", 'w') as f:
         # check power balance constraints violation
@@ -117,7 +125,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # call main function with the network name argument
-    network_names = ["14_ieee", "300_ieee"]
+    network_names = ["14_ieee", "118_ieee","300_ieee"]
     for network_name in network_names:
         # generate vnnlib files
         main(network_name, args.seed)
