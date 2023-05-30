@@ -1,37 +1,23 @@
-import numpy as np
 import random
 import onnxruntime  as ort
 import json
 import os
 import sys
 
-def main(network_name, seed):
-    random.seed(seed)  # set a specific seed value for reproducibility
 
-    data_folder = "data"
-    network_path = os.path.join(data_folder, f"{network_name}.ref.json")
+def extract_branch_limit(br_data):
+    rate_A = br_data.get("rate_a", 0.0)
+    
+    # unbounded if rate_A is 0 by convention
+    rate_A += 1e12 * (rate_A == 0)
 
-    # Open the JSON file
-    with open(network_path, 'r') as file:
-        # Load the data from the file
-        network = json.load(file)
+    Smax = rate_A
+    # Convert thermal limits into current limits
+    return Smax
 
-    N = len(network['data']['bus'])
-    L = len(network['data']['load'])
 
-    model_path = os.path.join("onnx", f"{network_name}_ml4acopf.onnx")
-
-    # Load the ONNX model into memory
-    sess = ort.InferenceSession(model_path)
-
-    # Get information about the input and output nodes of the ONNX model
-    input_info = sess.get_inputs()
-    output_info = sess.get_outputs()
-
-    # Assume the first input and output nodes are the ones you want to use
-    input_shape = input_info[0].shape
-    output_shape = output_info[0].shape
-
+# test power balance violation
+def generate_vnnlib_file_prop1(network, network_name, input_shape, output_shape):
     # Sort the keys of the load data dictionary
     sorted_load_keys = sorted(network['data']['load'].keys(), key=lambda x: int(x))
     sorted_bus_keys = sorted(network['data']['bus'].keys(), key=lambda x: int(x))
@@ -42,6 +28,8 @@ def main(network_name, seed):
         bus_id_to_index[bus_id] = idx
 
     # Reference load
+    N = len(network['data']['bus'])
+    L = len(network['data']['load'])
     pd = [0] * L
     qd = [0] * L
     pd_bus = [0] * N
@@ -68,7 +56,6 @@ def main(network_name, seed):
     # max_perc = 1.001
     # random_perc = 0.0001
 
-
     with open(f"vnnlib/{network_name}_prop1.vnnlib", 'w') as f:
         # check power balance constraints violation
         f.write("; Check power balance violation:\n")
@@ -83,23 +70,18 @@ def main(network_name, seed):
         # input perturbation
         perturbation = [random.uniform(-random_perc, random_perc) for i in range(L)]  # generate a list of random numbers between -0.01 and 0.01
         for i in range(L):
-            lb = pd[i] * min_perc
-            ub = pd[i] * max_perc
-            if pd[i] < 0:
-                lb = pd[i] * max_perc
-                ub = pd[i] * min_perc
+            lb = pd[i] * min_perc if pd[i] >= 0 else pd[i] * max_perc
+            ub = pd[i] * max_perc if pd[i] >= 0 else pd[i] * min_perc
+
             perturbed_lb = lb * (1 + perturbation[i])  # add the perturbation to the original lb
-            perturbed_ub = ub * (1 + perturbation[i])   # add the perturbation to the original ub
+            perturbed_ub = ub * (1 + perturbation[i])  # add the perturbation to the original ub
             f.write(f"(assert (<= X_{i} {round(perturbed_ub, 9)}))\n")
             f.write(f"(assert (>= X_{i} {round(perturbed_lb, 9)}))\n")
             f.write("\n")
         for i in range(L):
-            lb = qd[i] * min_perc
-            ub = qd[i] * max_perc
-            # update lb and ub for negative values
-            if qd[i] < 0:
-                lb = qd[i] * max_perc
-                ub = qd[i] * min_perc
+            lb = qd[i] * min_perc if qd[i] >= 0 else qd[i] * max_perc
+            ub = qd[i] * max_perc if qd[i] >= 0 else qd[i] * min_perc
+
             perturbed_lb = lb * (1 + perturbation[i])  # add the perturbation to the original lb
             perturbed_ub = ub * (1 + perturbation[i])  # add the perturbation to the original ub
             f.write(f"(assert (<= X_{i+L} {round(perturbed_ub, 9)}))\n")
@@ -120,13 +102,117 @@ def main(network_name, seed):
             f.write(f"(and (<= Y_{i+output_shape[1]-N} {round(lb, 9)}))\n")
         f.write("))\n")
 
+# test thermal limit violation
+def generate_vnnlib_file_prop2(network, network_name, input_shape, output_shape):
+    # Sort the keys of the load data dictionary
+    sorted_load_keys = sorted(network['data']['load'].keys(), key=lambda x: int(x))
+    sorted_branch_keys = sorted(network['data']['branch'].keys(), key=lambda x: int(x))
+
+    # Reference load
+    N = len(network['data']['bus'])
+    L = len(network['data']['load'])
+    E = len(network['data']['branch'])
+    pd = [0] * L
+    qd = [0] * L
+    Smax = [0] * E
+    for i, key in enumerate(sorted_load_keys):
+        pd[i] = network['data']['load'][key]['pd']
+        qd[i] = network['data']['load'][key]['qd']
+
+    for e, key in enumerate(sorted_branch_keys):
+        Smax[e] = extract_branch_limit(network['data']['branch'][key])
+
+    # Case 1: none of the attackers can find adversarial examples
+    min_perc = 0.9999
+    max_perc = 1.0001
+    random_perc = 0.00001
+
+    with open(f"vnnlib/{network_name}_prop2.vnnlib", 'w') as f:
+        # check thermal limits violation
+        f.write("; Check thermal limits violation:\n")
+        # declare constants
+        for x in range(input_shape[1]):
+            f.write(f"(declare-const X_{x} Real)\n")
+        f.write("\n")
+        for x in range(output_shape[1]):
+            f.write(f"(declare-const Y_{x} Real)\n")
+        f.write("\n")
+        f.write("; Input constraints:\n")
+        # input perturbation
+        perturbation = [random.uniform(-random_perc, random_perc) for i in range(L)]  # generate a list of random numbers between -0.01 and 0.01
+        for i in range(L):
+            lb = pd[i] * min_perc if pd[i] >= 0 else pd[i] * max_perc
+            ub = pd[i] * max_perc if pd[i] >= 0 else pd[i] * min_perc
+
+            perturbed_lb = lb * (1 + perturbation[i])  # add the perturbation to the original lb
+            perturbed_ub = ub * (1 + perturbation[i])  # add the perturbation to the original ub
+            f.write(f"(assert (<= X_{i} {round(perturbed_ub, 9)}))\n")
+            f.write(f"(assert (>= X_{i} {round(perturbed_lb, 9)}))\n")
+            f.write("\n")
+        for i in range(L):
+            lb = qd[i] * min_perc if qd[i] >= 0 else qd[i] * max_perc
+            ub = qd[i] * max_perc if qd[i] >= 0 else qd[i] * min_perc
+
+            perturbed_lb = lb * (1 + perturbation[i])  # add the perturbation to the original lb
+            perturbed_ub = ub * (1 + perturbation[i])  # add the perturbation to the original ub
+            f.write(f"(assert (<= X_{i+L} {round(perturbed_ub, 9)}))\n")
+            f.write(f"(assert (>= X_{i+L} {round(perturbed_lb, 9)}))\n")
+            f.write("\n")
+        # output properties
+        f.write("; Output property:\n")
+        f.write("(assert (or\n")
+        for e in range(E):
+            ub = max(10**(-3), 10**(-3)*Smax[e])
+            lb = -ub
+            f.write(f"(and (>= Y_{e+output_shape[1]-2*N-2*E} {round(ub, 9)}))\n")
+            f.write(f"(and (<= Y_{e+output_shape[1]-2*N-2*E} {round(lb, 9)}))\n")
+        for e in range(E):
+            ub = max(10**(-3), 10**(-2)*Smax[e])
+            lb = -ub
+            f.write(f"(and (>= Y_{e+output_shape[1]-2*N-E} {round(ub, 9)}))\n")
+            f.write(f"(and (<= Y_{e+output_shape[1]-2*N-E} {round(lb, 9)}))\n")
+        f.write("))\n")
+    return
+
+# test single bus power balance violation
+
+# test pg/qg bound violation
+
+def main(network_name, seed):
+    random.seed(seed)  # set a specific seed value for reproducibility
+
+    data_folder = "data"
+    network_path = os.path.join(data_folder, f"{network_name}.ref.json")
+
+    # Open the JSON file
+    with open(network_path, 'r') as file:
+        # Load the data from the file
+        network = json.load(file)
+
+    model_path = os.path.join("onnx", f"{network_name}_ml4acopf.onnx")
+
+    # Load the ONNX model into memory
+    sess = ort.InferenceSession(model_path)
+
+    # Get information about the input and output nodes of the ONNX model
+    input_info = sess.get_inputs()
+    output_info = sess.get_outputs()
+
+    # Assume the first input and output nodes are the ones you want to use
+    input_shape = input_info[0].shape
+    output_shape = output_info[0].shape
+
+    generate_vnnlib_file_prop1(network, network_name, input_shape, output_shape)
+    generate_vnnlib_file_prop2(network, network_name, input_shape, output_shape)
+
+
 if __name__ == '__main__':
-    # Check if the seed value is provided
+    # check if the seed value is provided
     if len(sys.argv) < 2:
         print("Error: Seed value not provided.")
         sys.exit(1)
 
-    # Extract the seed value from the command line argument
+    # extract the seed value from the command line argument
     seed = int(sys.argv[1])
 
     # call main function with the network name argument
