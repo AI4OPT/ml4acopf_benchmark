@@ -1,10 +1,9 @@
-import argparse
 import numpy as np
 import random
-import onnx
 import onnxruntime  as ort
 import json
 import os
+import sys
 
 def main(network_name, seed):
     random.seed(seed)  # set a specific seed value for reproducibility
@@ -54,7 +53,7 @@ def main(network_name, seed):
         bus_index = bus_id_to_index[bus_id]
         pd_bus[bus_index] = pd[i]
         qd_bus[bus_index] = qd[i]
-    # Case 1: both attackers can find adversarial examples
+    # Case 1: none of the attackers can find adversarial examples
     min_perc = 0.9999
     max_perc = 1.0001
     random_perc = 0.00001
@@ -64,7 +63,7 @@ def main(network_name, seed):
     # decimal_part = str(min_perc).split('.')[1]
     # num_decimal_places = len(decimal_part.rstrip('0'))
     # random_perc = 10**(-num_decimal_places)
-    # Case 3: none of the attacker can find adversarial examples
+    # # Case 3: both attackers can find adversarial examples
     # min_perc = 0.999
     # max_perc = 1.001
     # random_perc = 0.0001
@@ -122,15 +121,19 @@ def main(network_name, seed):
         f.write("))\n")
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--seed", type=int, required=True)
-    args = parser.parse_args()
+    # Check if the seed value is provided
+    if len(sys.argv) < 2:
+        print("Error: Seed value not provided.")
+        sys.exit(1)
+
+    # Extract the seed value from the command line argument
+    seed = int(sys.argv[1])
 
     # call main function with the network name argument
     network_names = ["14_ieee", "118_ieee","300_ieee"]
     for network_name in network_names:
         # generate vnnlib files
-        main(network_name, args.seed)
+        main(network_name, seed)
 
     # generate instances.csv file
     timeout = 300

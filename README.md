@@ -8,7 +8,7 @@ To set up the environment, follow these steps:
 ---
 The benchmark files are located in the `onnx` and `vnnlib` folders:
 
-To reproduce vnnlib files, run: `python generate_properties.py --seed=42`
+To reproduce vnnlib files, run: `python generate_properties.py 42`
 
 ## Vnnlib description
 ### Input:
