@@ -227,5 +227,5 @@ if __name__ == '__main__':
     for network in os.listdir('onnx'):
         for prop in os.listdir('vnnlib'):
             if "_".join(network.split("_")[:2]) == "_".join(prop.split("_")[:2]):
-                print(f"onnx/{network},vnnlib/{prop},{timeout}", file=csvFile)
+                print(f"./onnx/{network},./vnnlib/{prop},{timeout}", file=csvFile)
     csvFile.close()
