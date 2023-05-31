@@ -4,7 +4,6 @@ import json
 import os
 import sys
 
-
 def extract_branch_limit(br_data):
     rate_A = br_data.get("rate_a", 0.0)
     
@@ -177,6 +176,82 @@ def generate_vnnlib_file_prop2(network, network_name, input_shape, output_shape)
 # test single bus power balance violation
 
 # test pg/qg bound violation
+def generate_vnnlib_file_prop3(network, network_name, input_shape, output_shape):
+    # Sort the keys of the load data dictionary
+    sorted_load_keys = sorted(network['data']['load'].keys(), key=lambda x: int(x))
+    sorted_gen_keys = sorted(network['data']['gen'].keys(), key=lambda x: int(x))
+
+    # Reference load
+    N = len(network['data']['bus'])
+    L = len(network['data']['load'])
+    G = len(network['data']['gen'])
+    pd = [0] * L
+    qd = [0] * L
+    pmax = [0] * G
+    pmin = [0] * G
+    qmax = [0] * G
+    qmin = [0] * G
+
+    for i, key in enumerate(sorted_load_keys):
+        pd[i] = network['data']['load'][key]['pd']
+        qd[i] = network['data']['load'][key]['qd']
+
+    for g, key in enumerate(sorted_gen_keys):
+        pmax[g] = network['data']['gen'][key]['pmax']
+        pmin[g] = network['data']['gen'][key]['pmin']
+        qmax[g] = network['data']['gen'][key]['qmax']
+        qmin[g] = network['data']['gen'][key]['qmin']
+
+    min_perc = 0.95
+    max_perc = 1.05
+    random_perc = 0.001
+
+    with open(f"vnnlib/{network_name}_prop3.vnnlib", 'w') as f:
+        # check generation bounds violation
+        f.write("; Check generation bounds violation:\n")
+        # declare constants
+        for x in range(input_shape[1]):
+            f.write(f"(declare-const X_{x} Real)\n")
+        f.write("\n")
+        for x in range(output_shape[1]):
+            f.write(f"(declare-const Y_{x} Real)\n")
+        f.write("\n")
+        f.write("; Input constraints:\n")
+        # input perturbation
+        perturbation = [random.uniform(-random_perc, random_perc) for i in range(L)]  # generate a list of random numbers between -0.01 and 0.01
+        for i in range(L):
+            lb = pd[i] * min_perc if pd[i] >= 0 else pd[i] * max_perc
+            ub = pd[i] * max_perc if pd[i] >= 0 else pd[i] * min_perc
+
+            perturbed_lb = lb * (1 + perturbation[i])  # add the perturbation to the original lb
+            perturbed_ub = ub * (1 + perturbation[i])  # add the perturbation to the original ub
+            f.write(f"(assert (<= X_{i} {round(perturbed_ub, 9)}))\n")
+            f.write(f"(assert (>= X_{i} {round(perturbed_lb, 9)}))\n")
+            f.write("\n")
+        for i in range(L):
+            lb = qd[i] * min_perc if qd[i] >= 0 else qd[i] * max_perc
+            ub = qd[i] * max_perc if qd[i] >= 0 else qd[i] * min_perc
+
+            perturbed_lb = lb * (1 + perturbation[i])  # add the perturbation to the original lb
+            perturbed_ub = ub * (1 + perturbation[i])  # add the perturbation to the original ub
+            f.write(f"(assert (<= X_{i+L} {round(perturbed_ub, 9)}))\n")
+            f.write(f"(assert (>= X_{i+L} {round(perturbed_lb, 9)}))\n")
+            f.write("\n")
+        # output properties
+        f.write("; Output property:\n")
+        f.write("(assert (or\n")
+        for g in range(G):
+            ub = pmax[g]
+            lb = pmin[g]
+            f.write(f"(and (>= Y_{g} {round(ub, 9)}))\n")
+            f.write(f"(and (<= Y_{g} {round(lb, 9)}))\n")
+        for g in range(G):
+            ub = qmax[g]
+            lb = qmin[g]
+            f.write(f"(and (>= Y_{g+G} {round(ub, 9)}))\n")
+            f.write(f"(and (<= Y_{g+G} {round(lb, 9)}))\n")
+        f.write("))\n")
+    return
 
 def main(network_name, seed):
     random.seed(seed)  # set a specific seed value for reproducibility
@@ -204,6 +279,7 @@ def main(network_name, seed):
 
     generate_vnnlib_file_prop1(network, network_name, input_shape, output_shape)
     generate_vnnlib_file_prop2(network, network_name, input_shape, output_shape)
+    generate_vnnlib_file_prop3(network, network_name, input_shape, output_shape)
 
 
 if __name__ == '__main__':
