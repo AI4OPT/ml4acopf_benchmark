@@ -205,7 +205,7 @@ def generate_vnnlib_file_prop3(network, network_name, input_shape, output_shape)
     min_perc = 0.95
     max_perc = 1.05
     random_perc = 0.001
-    output_epsilon = 0.000001
+    output_epsilon = 1e-06
 
     with open(f"vnnlib/{network_name}_prop3.vnnlib", 'w') as f:
         # check generation bounds violation
@@ -242,13 +242,13 @@ def generate_vnnlib_file_prop3(network, network_name, input_shape, output_shape)
         f.write("; Output property:\n")
         f.write("(assert (or\n")
         for g in range(G):
-            ub = pmax[g] + output_epsilon
-            lb = pmin[g] - output_epsilon
+            ub = pmax[g] if pmax[g] != pmin[g] else pmax[g] + output_epsilon
+            lb = pmin[g] if pmax[g] != pmin[g] else pmin[g] - output_epsilon
             f.write(f"(and (>= Y_{g} {round(ub, 9)}))\n")
             f.write(f"(and (<= Y_{g} {round(lb, 9)}))\n")
         for g in range(G):
-            ub = qmax[g] + output_epsilon
-            lb = qmin[g] - output_epsilon
+            ub = qmax[g] + output_epsilon if qmax[g] != qmin[g] else qmax[g]
+            lb = qmin[g] - output_epsilon if qmax[g] != qmin[g] else qmin[g]
             f.write(f"(and (>= Y_{g+G} {round(ub, 9)}))\n")
             f.write(f"(and (<= Y_{g+G} {round(lb, 9)}))\n")
         f.write("))\n")
