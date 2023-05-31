@@ -247,8 +247,8 @@ def generate_vnnlib_file_prop3(network, network_name, input_shape, output_shape)
             f.write(f"(and (>= Y_{g} {round(ub, 9)}))\n")
             f.write(f"(and (<= Y_{g} {round(lb, 9)}))\n")
         for g in range(G):
-            ub = qmax[g] + output_epsilon if qmax[g] != qmin[g] else qmax[g]
-            lb = qmin[g] - output_epsilon if qmax[g] != qmin[g] else qmin[g]
+            ub = qmax[g] if qmax[g] != qmin[g] else qmax[g] + output_epsilon
+            lb = qmin[g] if qmax[g] != qmin[g] else qmin[g] - output_epsilon
             f.write(f"(and (>= Y_{g+G} {round(ub, 9)}))\n")
             f.write(f"(and (<= Y_{g+G} {round(lb, 9)}))\n")
         f.write("))\n")
