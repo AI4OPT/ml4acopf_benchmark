@@ -1,3 +1,5 @@
+Copyright © 2023, Georgia Institute of Technology. All rights reserved.
+
 # Benchmark
 
 ## Environment Setup
