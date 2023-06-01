@@ -8,13 +8,15 @@ To set up the environment, follow these steps:
 ---
 The benchmark files are located in the `onnx` and `vnnlib` folders:
 
-To reproduce vnnlib files, run: `python generate_properties.py 42`
+To reproduce vnnlib files, run: `python generate_properties.py`
 
 ## Vnnlib description
 ### Input:
 +- a% perturbation of the reference active and reactive load + random noise between -b% and b%, where a and b are self-defined values.
 ### Output:
-Check power balance violation:
+Check the properties of the NN output
+
+For example, we are interested in if power balance violation is within some threshold:
 
 for each bus `i`
 - `|p_balance[i]| <= max(10^(-3), 10^(-2)*pd_i)`
