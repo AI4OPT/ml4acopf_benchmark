@@ -2,11 +2,12 @@ import random
 import onnxruntime  as ort
 import json
 import os
+import csv
 import sys
 
 def extract_branch_limit(br_data):
     rate_A = br_data.get("rate_a", 0.0)
-    
+
     # unbounded if rate_A is 0 by convention
     rate_A += 1e12 * (rate_A == 0)
 
@@ -14,6 +15,17 @@ def extract_branch_limit(br_data):
     # Convert thermal limits into current limits
     return Smax
 
+def read_csv_data(property_number, network_name, file_path='data/vnnlib_params.csv'):
+    with open(file_path, 'r') as csv_file:
+        csv_reader = csv.reader(csv_file)
+        for row in csv_reader:
+            if len(row) >= 5 and row[0] == property_number and row[1] == network_name:
+                min_perc = float(row[2])
+                max_perc = float(row[3])
+                random_perc = float(row[4])
+                return min_perc, max_perc, random_perc
+
+    return 0.95, 1.05, 0.001  # Return default values if the data is not found
 
 # test power balance violation
 def generate_vnnlib_file_prop1(network, network_name, input_shape, output_shape):
@@ -40,20 +52,8 @@ def generate_vnnlib_file_prop1(network, network_name, input_shape, output_shape)
         bus_index = bus_id_to_index[bus_id]
         pd_bus[bus_index] = pd[i]
         qd_bus[bus_index] = qd[i]
-    # Case 1: none of the attackers can find adversarial examples
-    min_perc = 0.9999
-    max_perc = 1.0001
-    random_perc = 0.00001
-    # # Case 2: uniform sampling cannot find adversarial examples, while PGD can
-    # min_perc = 0.9994
-    # max_perc = 2 - min_perc
-    # decimal_part = str(min_perc).split('.')[1]
-    # num_decimal_places = len(decimal_part.rstrip('0'))
-    # random_perc = 10**(-num_decimal_places)
-    # # Case 3: both attackers can find adversarial examples
-    # min_perc = 0.999
-    # max_perc = 1.001
-    # random_perc = 0.0001
+
+    min_perc, max_perc, random_perc = read_csv_data('1', network_name)
 
     with open(f"vnnlib/{network_name}_prop1.vnnlib", 'w') as f:
         # check power balance constraints violation
@@ -121,10 +121,7 @@ def generate_vnnlib_file_prop2(network, network_name, input_shape, output_shape)
     for e, key in enumerate(sorted_branch_keys):
         Smax[e] = extract_branch_limit(network['data']['branch'][key])
 
-    # Case 1: none of the attackers can find adversarial examples
-    min_perc = 0.9999
-    max_perc = 1.0001
-    random_perc = 0.00001
+    min_perc, max_perc, random_perc = read_csv_data('2', network_name)
 
     with open(f"vnnlib/{network_name}_prop2.vnnlib", 'w') as f:
         # check thermal limits violation
@@ -202,9 +199,8 @@ def generate_vnnlib_file_prop3(network, network_name, input_shape, output_shape)
         qmax[g] = network['data']['gen'][key]['qmax']
         qmin[g] = network['data']['gen'][key]['qmin']
 
-    min_perc = 0.95
-    max_perc = 1.05
-    random_perc = 0.001
+    min_perc, max_perc, random_perc = read_csv_data('3', network_name)
+
     output_epsilon = 1e-06
 
     with open(f"vnnlib/{network_name}_prop3.vnnlib", 'w') as f:
@@ -284,13 +280,10 @@ def main(network_name, seed):
 
 
 if __name__ == '__main__':
-    # check if the seed value is provided
-    if len(sys.argv) < 2:
-        print("Error: Seed value not provided.")
-        sys.exit(1)
-
-    # extract the seed value from the command line argument
-    seed = int(sys.argv[1])
+    seed=42
+    # if the seed value is provided
+    if len(sys.argv) == 2:
+        seed = int(sys.argv[1])
 
     # call main function with the network name argument
     network_names = ["14_ieee", "118_ieee","300_ieee"]
