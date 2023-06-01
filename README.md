@@ -1,16 +1,64 @@
-# ml4acopf_benchmark
-Benchmark of ml4acopf for VNN-COMP 2023
+# Benchmark
 
-## Links
-- VNN-COMP 2023 competition website: https://sites.google.com/view/vnn2023
-- VNN-COMP 2023 competition GitHub repo: https://github.com/stanleybak/vnncomp2023
-- VNN-COMP 2022 benchmarks: https://github.com/ChristopherBrix/vnncomp2022_benchmarks
+## Environment Setup
+To set up the environment, follow these steps:
+1. Create the environment using the command: `conda env create -f env.yaml`
+2. Activate the environment using the command: `conda activate onnx-vnnlib-env`
 
-## Proposing a new benchmark
-Source: https://github.com/stanleybak/vnncomp2023/issues/2
->To propose a new benchmark, please create a public git repository with all the necessary code.
->The repository must be structured as follows:
-> - It must contain a generate_properties.py file which accepts the seed as the only command line parameter.
-> - There must be a folder with all .vnnlib files, which may be identical to the folder containing the generate_properties.py file
-> - There must be a folder with all .onnx files, which may be identical to the folder containing the generate_properties.py file
-> - The generate_properties.py file will be run using Python 3.8 on a t2.large AWS instance. (see https://vnncomp.christopher-brix.de/)
+---
+The benchmark files are located in the `onnx` and `vnnlib` folders:
+
+To reproduce vnnlib files, run: `python generate_properties.py`
+
+## Vnnlib description
+### Input:
++- a% perturbation of the reference active and reactive load + random noise between -b% and b%, where a and b are self-defined values.
+### Output:
+Check the properties of the NN output
+
+For example, we are interested in if power balance violation is within some threshold:
+
+for each bus `i`
+- `|p_balance[i]| <= max(10^(-3), 10^(-2)*pd_i)`
+- `|q_balance[i]| <= max(10^(-3), 10^(-2)*qd_i)`
+
+where `pd_i` and `qd_i` refer to the active and reactive load at each bus respectively.
+
+---
+## Inference
+The code to run inference is presented in the `main.py` file.
+
+## Example
+Take 14-bus system as an example:
+- onnx file: `14_ieee_ml4acopf.onnx`
+- vnnlib file: `14_ieee_prop1.vnnlib`
+
+### Parameters
+- N = 14 : number of buses
+- G =  5 : number of generators
+- L = 11 : number of loads
+- E = 20 : number of lines
+---
+### Onnx model description
+NN with bound clip and residual calculation.
+#### Input: `pd/qd`
+dim: (2L) = 22
+- `pd`: Real power demand. (L)
+- `qd`: Reactive power demand. (L)
+#### Output: `pg/qg/vm/va/pf/pt/qf/qt/thrm_1/thrm_2/p_balance/q_balance`
+dim: (2G + 4N + 6E) = 186
+- `pg`: Real power generation. (G)
+- `qg`: Reactive power generation. (G)
+- `vm`: Voltage magnitude. (N)
+- `va`: Voltage angle. (N)
+- `pf`: Real power flow from. (E)
+- `pt`: Real power flow to. (E)
+- `qf`: Reactive power flow from. (E)
+- `qt`: Reactive power flow to. (E)
+- `thrm_1`: Thermal limit from residual. (E)
+- `thrm_2`: Thermal limit to residual. (E)
+- `p_balance`: Real power balance residual. (N)
+- `q_balance`: Reactive power balance residual. (N)
+
+#### Compute graph
+![](etc/compute_graph.png)

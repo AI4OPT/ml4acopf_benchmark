@@ -1,0 +1,8 @@
+
+.DS_Store
+
+# virtual env
+venv
+
+# unused files
+obsolete
