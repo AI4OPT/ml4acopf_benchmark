@@ -1,6 +1,7 @@
 Copyright © 2023, Georgia Institute of Technology. All rights reserved.
 
-# Benchmark
+# ml4acopf benchmark
+Machine Learning for AC Optimal Power Flow(ACOPF) benchmark for VNNCOMP
 
 ## Environment Setup
 To set up the environment, follow these steps:
@@ -42,7 +43,6 @@ Take 14-bus system as an example:
 - E = 20 : number of lines
 ---
 ### Onnx model description
-NN with bound clip and residual calculation.
 #### Input: `pd/qd`
 dim: (2L) = 22
 - `pd`: Real power demand. (L)
