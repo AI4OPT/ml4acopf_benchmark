@@ -450,7 +450,7 @@ if __name__ == '__main__':
         main(network_name, seed)
 
     # generate instances.csv file
-    timeout = 300
+    timeout = 600
     csvFile = open("instances.csv", "w")
     for network in os.listdir('onnx'):
         for prop in os.listdir('vnnlib'):
